@@ -35,7 +35,7 @@ def get_options():
                     help='username@host or other name for the password' )
     opt.add_option( '-m', '--memo', 
                     dest='memo',
-                    default=None,
+                    default='',
                     help='Notes' )
     opt.add_option( '-v', '--verbose',
                     dest='verbose',
@@ -94,7 +94,7 @@ def save_database(db):
 def create_pw(db,opts):
     if opts.user_host == None:
         raise UsageError( 'Need a user/hostname option for password creation.')
-    print "Creating password for %s..." % opts.user_host
+    print "Creating password for %s (%s)..." % (opts.user_host, opts.memo)
 
     passwd  = getpass.getpass( "Password: " )
     passwd2 = getpass.getpass( "Re-enter: " )
@@ -145,11 +145,22 @@ def get_pw(db,opts):
     print alpha_encode(result, record['length'])
 
 def list_pw(db,opts):
-    pass
-
+    for user_host in db:
+        record = db[user_host]
+        print '%s (%s)' % (user_host, record['memo'])
+    
 
 def delete_pw(db,opts):
-    pass
+    if db.has_key( opts.user_host ):
+        resp = raw_input( "Are you sure you want to delete %s (%s) from the database? [y/N]" % ( opts.user_host, opts.memo ))
+        if resp == 'y':
+            del db[ opts.user_host ]
+        else:
+            print "Nothing done."
+            
+    else:
+        print "No password for %s found in database." % opts.user_host
+        sys.exit(1)
 
 
 db = load_database()        
