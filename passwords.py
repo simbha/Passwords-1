@@ -152,7 +152,8 @@ def list_pw(db,opts):
 
 def delete_pw(db,opts):
     if db.has_key( opts.user_host ):
-        resp = raw_input( "Are you sure you want to delete %s (%s) from the database? [y/N]" % ( opts.user_host, opts.memo ))
+        question = "Are you sure you want to delete %s (%s) from the database? [y/N]"
+        resp = raw_input( question % ( opts.user_host, opts.memo ))
         if resp == 'y':
             del db[ opts.user_host ]
         else:
