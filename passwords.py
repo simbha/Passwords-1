@@ -1,5 +1,23 @@
 #!/usr/bin/python
 
+#
+# LICENSE:
+#  Copyright 2011, jtmaher
+#
+#  This program is free software: you can redistribute it and/or modify	
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import hashlib
 import os
 import json 
@@ -8,9 +26,13 @@ import getpass
 import base64
 from optparse import OptionParser
 
+# The location of the password database
 PASSWORD_DATABASE = os.path.expanduser( '~/.passwords' )
+
+# The alphabet used for the generated passwords
 ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890-=`~!@#$%^&*()_+{}|[]:;?/'
 
+# Additional salt used for verification hashes
 NUMS = 'NOTHING UP MY SLEEVES'
 
 class UsageError( Exception ):
