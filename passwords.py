@@ -26,6 +26,7 @@ import getpass
 import base64
 from optparse import OptionParser
 
+
 # The location of the password database
 PASSWORD_DATABASE = os.path.expanduser( '~/.passwords' )
 
@@ -35,6 +36,7 @@ ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890-=`~!@
 # Additional salt used for verification hashes
 NUMS = 'NOTHING UP MY SLEEVES'
 
+
 class UsageError( Exception ):
     def __init__( self, msg ):
         self.msg = msg
@@ -43,7 +45,7 @@ def get_options():
     opt = OptionParser()
     opt.add_option( '-d', '--difficulty',
                     dest='difficulty',
-                    default=4096,
+                    default=0xFFFF,
                     type='int',
                     help='Number of iterations of hash function' )
     opt.add_option( '-l', '--length',
@@ -69,6 +71,21 @@ def get_options():
     opt.usage += ' [create|get|list|delete]'
     return (opt,opts,args)
 
+# If possible, output password to clipboard
+try:
+    import pygtk
+    pygtk.require('2.0')
+    import gtk
+    use_clipboard = True
+
+except ImportError:
+    use_clipboard = False
+
+def copy_to_clipboard( passwd ):
+    clipboard = gtk.clipboard_get()
+    clipboard.set_text( passwd )
+    clipboard.store()
+    print "Password copied to clipboard."
 
 def compute_password( passwd, n_iter ):
     for i in range(n_iter):
@@ -136,9 +153,12 @@ def create_pw(db,opts):
     mypass_check = compute_password(
         passwd + NUMS, 
         opts.difficulty )
-    
-    print alpha_encode( mypass, opts.length )
-    
+
+    if not clipboard or opts.verbose:
+        print alpha_encode( mypass, opts.length )
+    else:
+        copy_to_clipboard( alpha_encode( mypass, opts.length ) )
+
     db[opts.user_host] = { 
         'length':     opts.length,
         'difficulty': opts.difficulty,
@@ -164,7 +184,11 @@ def get_pw(db,opts):
     print "Computing password..."
 
     result = compute_password( passwd, record['difficulty'] )
-    print alpha_encode(result, record['length'])
+
+    if not use_clipboard or opts.verbose:
+        print alpha_encode(result, record['length'])
+    else:
+        copy_to_clipboard( alpha_encode(result, record['length']) )
 
 def list_pw(db,opts):
     for user_host in db:
@@ -185,31 +209,32 @@ def delete_pw(db,opts):
         print "No password for %s found in database." % opts.user_host
         sys.exit(1)
 
+if __name__ == "__main__":
+    db = load_database()        
+    
+    (parser,opts,args) = get_options()
+    
+    actions = { 'create': create_pw,
+                'get':    get_pw,
+                'list':   list_pw,
+                'delete': delete_pw }
+    
+    try:
+        if len(args) != 1 or not actions.has_key(args[0]):
+            raise UsageError( "Need an action: create, get, list or delete.")
+        else:
+            action = args[0]
 
-db = load_database()        
-
-(parser,opts,args) = get_options()
-
-actions = { 'create': create_pw,
-            'get':    get_pw,
-            'list':   list_pw,
-            'delete': delete_pw }
-
-try:
-    if len(args) != 1 or not actions.has_key(args[0]):
-        raise UsageError( "Need an action: create, get, list or delete.")
-    else:
-        action = args[0]
-
-    actions[action](db,opts)
-
-except UsageError as u:
-    print u.msg
-    parser.print_help()
-    sys.exit(1)
-
-except KeyboardInterrupt:
-    print
-    sys.exit(1)
-
-save_database( db )
+            actions[action](db,opts)
+            
+    except UsageError as u:
+        print u.msg
+        parser.print_help()
+        sys.exit(1)
+        
+    except KeyboardInterrupt:
+        print
+        sys.exit(1)
+        
+    save_database( db )
+        
