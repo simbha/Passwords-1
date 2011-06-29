@@ -185,6 +185,8 @@ def create_pw(db,opts):
 def get_pw(db,opts):
     if not db.has_key( opts.user_host ):
         print "I don't have a password for %s" % opts.user_host
+        sys.exit(1)
+
     record = db[opts.user_host]
 
     passwd  = getpass.getpass( "Password: " )
