@@ -283,6 +283,7 @@ def create_pw(mydb, opts):
         passwd, 
         opts.difficulty )
 
+    ## This is the verification password for the database
     mypass_check = compute_password(
         passwd + NUMS, 
         opts.difficulty )
