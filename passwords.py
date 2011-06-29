@@ -40,7 +40,7 @@ necessary.
 
 EXAMPLES:
 
-- Create a password
+- Create a strong password
   ./passwords.py create -u user@host
 
 - Create a password of length 8 using only alphanumeric chars
@@ -85,6 +85,8 @@ from optparse import OptionParser
 # The location of the password database...
 # Edit this to specify an alternate location
 PASSWORD_DATABASE = os.path.expanduser( '~/.passwords' )
+DEFAULT_LENGTH = 32
+DEFAULT_DIFFICULTY = 0xFFFF
 
 # The alphabet used for the generated passwords
 ALPHABETS = { 
@@ -115,13 +117,13 @@ def get_options():
 
     opt.add_option( '-d', '--difficulty',
                     dest='difficulty',
-                    default=0xFFFF,
+                    default=DEFAULT_DIFFICULTY,
                     type='int',
                     help='Number of iterations of hash function' )
 
     opt.add_option( '-l', '--length',
                     dest='length',
-                    default=32,
+                    default=DEFAULT_LENGTH,
                     type='int',
                     help='Password length' )
 
@@ -251,9 +253,16 @@ def save_database(mydb):
 
 def create_pw(mydb, opts):
     """Create a new password"""
-
+    
     if opts.user_host == None:
         raise UsageError( 'Need a user/hostname option for password creation.')
+
+    if mydb.has_key(opts.user_host):
+        msg  = 'I already have a password for %s.\n' % opts.user_host
+        msg += 'Please delete it from the database if you want to replace it:\n'
+        msg += '  ./passwords.py delete -u %s' % opts.user_host
+        raise UsageError( msg )
+
     print "Creating password for %s (%s)..." % (opts.user_host, opts.memo)
 
     passwd  = getpass.getpass( "Password: " )
@@ -373,7 +382,7 @@ def main():
             
     except UsageError as uerr:
         print uerr.msg
-        parser.print_help()
+        # parser.print_help()
         sys.exit(1)
         
     except KeyboardInterrupt:
