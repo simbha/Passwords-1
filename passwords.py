@@ -114,6 +114,7 @@ def compute_password( passwd, n_iter ):
         n_iter -= 1
     return passwd
 
+
 def alpha_encode(msg, length, alphabet):
     """Encode the password in the chosen alphabet"""
 
