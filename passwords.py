@@ -211,9 +211,12 @@ def load_database():
     try:
         myfile = open( PASSWORD_DATABASE, 'r' )
         mydb = json.loads( myfile.read() )
+
         if( not mydb.has_key(MAGIC_KEY) or 
             not mydb[MAGIC_KEY] == MAGIC_VALUE ):
             raise ValueError()
+
+        del mydb[MAGIC_KEY]
 
         myfile.close()
 
@@ -233,6 +236,9 @@ def load_database():
 
 def save_database(mydb):
     """Save JSON password database"""
+
+    # Set magic key to identify file
+    mydb[MAGIC_KEY] = MAGIC_VALUE
 
     try:
         myfile = open( PASSWORD_DATABASE, 'w' )
@@ -275,8 +281,6 @@ def create_pw(mydb, opts):
         copy_to_clipboard( 
             alpha_encode( mypass, opts.length, opts.alphabet ) )
     
-    mydb[MAGIC_KEY] = MAGIC_VALUE
-
     mydb[opts.user_host] = { 
         'length':     opts.length,
         'difficulty': opts.difficulty,
@@ -324,8 +328,6 @@ def list_pw( mydb, opts ):
     """List passwords in the databas"""
 
     for user_host in mydb:
-        if user_host == MAGIC_KEY:
-            continue
         record = mydb[user_host]
         if opts.verbose:
             print '%s (%s)' % (user_host, record['memo'])
