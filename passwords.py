@@ -35,12 +35,11 @@ PASSWORD_DATABASE = os.path.expanduser( '~/.passwords' )
 # The alphabet used for the generated passwords
 ALPHABETS = { 
     'all': """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno""" + 
-    """pqrstuvwxyz1234567890-=`~!@#$%^&*()_+{}|[]:;?/'"""",
+    """pqrstuvwxyz1234567890-=`~!@#$%^&*()_+{}|[]:;?/"'""",
     'nosymb': """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv1234567890""" }
 
 # Additional salt used for verification hashes
 NUMS = 'NOTHING UP MY SLEEVES'
-
 
 class UsageError( Exception ):
     """Catch-all error messagee"""
@@ -50,6 +49,7 @@ class UsageError( Exception ):
 
 def get_options():
     """Configures the options"""
+
     opt = OptionParser()
     opt.add_option( '-d', '--difficulty',
                     dest='difficulty',
@@ -83,6 +83,7 @@ def get_options():
     opt.usage += ' [create|get|list|delete]'
     return (opt, myopts, myargs)
 
+
 # If possible, output password to clipboard
 try:
     import pygtk
@@ -93,15 +94,19 @@ try:
 except ImportError:
     USE_CLIPBOARD = False
 
+
 def copy_to_clipboard( passwd ):
     """Write the password to the GTK clipboard"""
+
     clipboard = gtk.clipboard_get()
     clipboard.set_text( passwd )
     clipboard.store()
     print "Password copied to clipboard."
 
+
 def compute_password( passwd, n_iter ):
     """Compute the iterated sha512sum"""
+
     while n_iter > 0:
         myhash = hashlib.sha512()
         myhash.update(passwd)
@@ -111,6 +116,7 @@ def compute_password( passwd, n_iter ):
 
 def alpha_encode(msg, length, alphabet):
     """Encode the password in the chosen alphabet"""
+
     try:
         chars = ALPHABETS[alphabet]
     except KeyError:
@@ -129,10 +135,10 @@ def alpha_encode(msg, length, alphabet):
     arr.reverse()
     return ''.join(arr[0:length])
 
-
     
 def load_database():
     """Load JSON password database"""
+
     try:
         myfile = open( PASSWORD_DATABASE, 'r' )
         mydb = json.loads( myfile.read() )
@@ -146,6 +152,7 @@ def load_database():
 
 def save_database(mydb):
     """Save JSON password database"""
+
     try:
         myfile = open( PASSWORD_DATABASE, 'w' )
         myfile.write( json.dumps(mydb, sort_keys=True, indent=2 ) )
@@ -157,6 +164,7 @@ def save_database(mydb):
 
 def create_pw(mydb, opts):
     """Create a new password"""
+
     if opts.user_host == None:
         raise UsageError( 'Need a user/hostname option for password creation.')
     print "Creating password for %s (%s)..." % (opts.user_host, opts.memo)
@@ -192,11 +200,11 @@ def create_pw(mydb, opts):
         'alphabet':   opts.alphabet,
         'check_hash': base64.b64encode( mypass_check ),
         'memo':       opts.memo }
-    
-    
+        
     
 def get_pw( mydb, opts):
     """Retrieve a password from database"""
+
     if not mydb.has_key( opts.user_host ):
         print "I don't have a password for %s" % opts.user_host
         sys.exit(1)
@@ -228,6 +236,7 @@ def get_pw( mydb, opts):
         print "KeyError: Database entry has no key %s" % err
         sys.exit(1)
         
+
 def list_pw( mydb, opts ):
     """List passwords in the databas"""
     for user_host in mydb:
@@ -236,6 +245,7 @@ def list_pw( mydb, opts ):
             print '%s (%s)' % (user_host, record['memo'])
         else:
             print user_host
+
 
 def delete_pw( mydb, opts ):
     """Delete a password from the database"""
@@ -252,8 +262,10 @@ def delete_pw( mydb, opts ):
         print "No password for %s found in database." % opts.user_host
         sys.exit(1)
 
+
 def main():
     """The main function"""
+
     mydb = load_database()        
     
     (parser, opts, args) = get_options()
@@ -280,6 +292,7 @@ def main():
         sys.exit(1)
         
     save_database( mydb )
+
 
 if __name__ == "__main__":
     main()
