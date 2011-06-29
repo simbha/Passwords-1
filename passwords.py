@@ -26,6 +26,9 @@ the password, and a "verification" hash (using an alternate salt).
 The verification hash is used to ensure that the correct 
 master password has been provided for retrieval requests.
 
+Note: There is no need to use the same master password for all
+sites, although allowing this is a design goal of this project.
+
 The master and generated passwords are not stored anywhere,
 and should be secure in the event that a single generated 
 password or the password database is compromised.  This is,
