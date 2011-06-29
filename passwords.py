@@ -3,7 +3,58 @@
 """
 A simple secure password manager
 
+DESCRIPTION:
+
+This program maintains a secure database of passwords to
+a collection of sites.  The intended (but not required)
+usage is to generate secure passwords from one "master password".
+
+The method is to create an iterated sha512 hash of the 
+"master password", salted with the user@hostname string.  
+This hash is then encoded in a selectable alphabet and 
+truncated to any desired length.  These features should
+allow passwords to be created to match even the most 
+
+The password will be copied to the GTK clipboard if 
+available, or else printed to stdout.
+
+The database itself stores only the user@hostname, the number
+of iterations used in hashing, the alphabet, the length of 
+the password, and a "verification" hash (using an alternate salt).
+The verification hash is used to ensure that the correct 
+master password has been provided for retrieval requests.
+
+The master and generated passwords are not stored anywhere,
+and should be secure in the event that a single generated 
+password or the password database is compromised.  This is,
+of course, contingent upon a reasonably strong choice of
+master password.
+
+The generated passwords are a deterministic function of the 
+master password, the number of iterations ("difficulty"), the
+alphabet, password length, and the user/host name.  Thus,
+if default parameters are used, the database is not strictly
+necessary.
+
+EXAMPLES:
+
+- Create a password
+  ./passwords.py create -u user@host
+
+- Create a password of length 8 using only alphanumeric chars
+  ./passwords.py create -u user@stupidhost -l 8 -a nosymb
+
+- Retrieve a password
+  ./passwords.py get -u user@host
+
+- List passwords in database
+  ./passwords.py list
+
+- Delete password from database
+  ./passwords.py delete -u user@host 
+
 LICENSE:
+
 Copyright 2011, jtmaher
 
 This program is free software: you can redistribute it and/or modify	
@@ -240,6 +291,7 @@ def get_pw( mydb, opts):
 
 def list_pw( mydb, opts ):
     """List passwords in the databas"""
+
     for user_host in mydb:
         record = mydb[user_host]
         if opts.verbose:
@@ -250,6 +302,7 @@ def list_pw( mydb, opts ):
 
 def delete_pw( mydb, opts ):
     """Delete a password from the database"""
+
     if mydb.has_key( opts.user_host ):
         question = "Are you sure you want to delete %s"
         question += " (%s) from the database? [y/N]"
