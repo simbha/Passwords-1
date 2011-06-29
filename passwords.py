@@ -31,7 +31,9 @@ from optparse import OptionParser
 PASSWORD_DATABASE = os.path.expanduser( '~/.passwords' )
 
 # The alphabet used for the generated passwords
-ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890-=`~!@#$%^&*()_+{}|[]:;?/'
+ALPHABETS = { 
+    'all': '''ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890-=`~!@#$%^&*()_+{}|[]:;?/'"''',
+    'nosymb': '''ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv1234567890''' }
 
 # Additional salt used for verification hashes
 NUMS = 'NOTHING UP MY SLEEVES'
@@ -57,6 +59,10 @@ def get_options():
                     dest='user_host',
                     default=None,
                     help='username@host or other name for the password' )
+    opt.add_option( '-a', '--alphabet',
+                    dest='alphabet',
+                    default='all',
+                    help='Alphabet to use for password' )
     opt.add_option( '-m', '--memo', 
                     dest='memo',
                     default='',
@@ -66,7 +72,7 @@ def get_options():
                     default=False,
                     action='store_true',
                     help='Verbose mode' )
-
+    
     (opts,args) = opt.parse_args()
     opt.usage += ' [create|get|list|delete]'
     return (opt,opts,args)
@@ -94,18 +100,25 @@ def compute_password( passwd, n_iter ):
         passwd = m.digest()
     return passwd
 
-def alpha_encode(msg,length):
+def alpha_encode(msg,length,alphabet):
+    try:
+        chars = ALPHABETS[alphabet]
+    except KeyError:
+        print "Error: Unknown alphabet %s" % alphabet
+        sys.exit(1)
+
     n = 0
     for i in range( len(msg) ):
         n += ord(msg[i]) * (256**i)
     arr = []
-    base = len(ALPHABET)
+    base = len(chars)
     while n:
         rem = n % base
         n = n // base
-        arr.append(ALPHABET[rem])
+        arr.append(chars[rem])
     arr.reverse()
     return ''.join(arr[0:length])
+
 
     
 def load_database():
@@ -154,14 +167,16 @@ def create_pw(db,opts):
         passwd + NUMS, 
         opts.difficulty )
 
-    if not clipboard or opts.verbose:
-        print alpha_encode( mypass, opts.length )
+    if not use_clipboard or opts.verbose:
+        print alpha_encode( mypass, opts.length, opts.alphabet )
     else:
-        copy_to_clipboard( alpha_encode( mypass, opts.length ) )
+        copy_to_clipboard( 
+            alpha_encode( mypass, opts.length, opts.alphabet ) )
 
     db[opts.user_host] = { 
         'length':     opts.length,
         'difficulty': opts.difficulty,
+        'alphabet':   opts.alphabet,
         'check_hash': base64.b64encode( mypass_check ),
         'memo':       opts.memo }
     
@@ -175,21 +190,28 @@ def get_pw(db,opts):
     passwd  = getpass.getpass( "Password: " )
     passwd += opts.user_host
 
-    passwd_check = compute_password( passwd + NUMS, record['difficulty'] )
+    try:
+        passwd_check = compute_password( passwd + NUMS, record['difficulty'] )
+        
+        if not base64.b64encode(passwd_check) == record['check_hash']:
+            print "Incorrect password. Please try again."
+            sys.exit(1)
+            
+        print "Computing password..."
+
+        result = compute_password( passwd, record['difficulty'] )
     
-    if not base64.b64encode(passwd_check) == record['check_hash']:
-        print "Incorrect password. Please try again."
+        if not use_clipboard or opts.verbose:
+            print alpha_encode(
+                result, record['length'], record['alphabet'] )
+        else:
+            copy_to_clipboard(
+                alpha_encode(result, record['length'], record['alphabet']) )
+
+    except KeyError as err:
+        print "KeyError: Database entry has no key %s" % err
         sys.exit(1)
-
-    print "Computing password..."
-
-    result = compute_password( passwd, record['difficulty'] )
-
-    if not use_clipboard or opts.verbose:
-        print alpha_encode(result, record['length'])
-    else:
-        copy_to_clipboard( alpha_encode(result, record['length']) )
-
+        
 def list_pw(db,opts):
     for user_host in db:
         record = db[user_host]
