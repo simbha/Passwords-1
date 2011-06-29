@@ -97,6 +97,10 @@ ALPHABETS = {
 # Additional salt used for verification hashes
 NUMS = 'NOTHING UP MY SLEEVES'
 
+# Used to identify password database
+MAGIC_VALUE = 'PASSWORDS12345'
+MAGIC_KEY   = 'MAGIC_KEY'
+
 class UsageError( Exception ):
     """Catch-all error message"""
 
@@ -207,10 +211,22 @@ def load_database():
     try:
         myfile = open( PASSWORD_DATABASE, 'r' )
         mydb = json.loads( myfile.read() )
+        if( not mydb.has_key(MAGIC_KEY) or 
+            not mydb[MAGIC_KEY] == MAGIC_VALUE ):
+            raise ValueError()
+
         myfile.close()
 
     except IOError:
         mydb = {}
+
+    except ValueError:
+        print( "The file \"%s\" is not a passwords.py database."
+               % PASSWORD_DATABASE )
+        print(
+            "Please configure a different "
+            + "path for PASSWORD_DATABASE." )
+        sys.exit(1)
 
     return mydb
 
@@ -258,6 +274,8 @@ def create_pw(mydb, opts):
     else:
         copy_to_clipboard( 
             alpha_encode( mypass, opts.length, opts.alphabet ) )
+    
+    mydb[MAGIC_KEY] = MAGIC_VALUE
 
     mydb[opts.user_host] = { 
         'length':     opts.length,
@@ -306,6 +324,8 @@ def list_pw( mydb, opts ):
     """List passwords in the databas"""
 
     for user_host in mydb:
+        if user_host == MAGIC_KEY:
+            continue
         record = mydb[user_host]
         if opts.verbose:
             print '%s (%s)' % (user_host, record['memo'])
