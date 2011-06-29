@@ -16,7 +16,9 @@ truncated to any desired length.  These features should
 allow passwords to be created to match even the most 
 
 The password will be copied to the GTK clipboard if 
-available, or else printed to stdout.
+available, or else printed to stdout.  Note: You have to 
+right-click "paste" -- middle mouse button does not work
+with this.
 
 The database itself stores only the user@hostname, the number
 of iterations used in hashing, the alphabet, the length of 
@@ -80,20 +82,24 @@ import base64
 from optparse import OptionParser
 
 
-# The location of the password database
+# The location of the password database...
+# Edit this to specify an alternate location
 PASSWORD_DATABASE = os.path.expanduser( '~/.passwords' )
 
 # The alphabet used for the generated passwords
 ALPHABETS = { 
     'all': """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno""" + 
     """pqrstuvwxyz1234567890-=`~!@#$%^&*()_+{}|[]:;?/"'""",
-    'nosymb': """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv1234567890""" }
+    'nosymb': """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv1234567890""" 
+    # You can add additional alphabets here if necessary
+    }
 
 # Additional salt used for verification hashes
 NUMS = 'NOTHING UP MY SLEEVES'
 
 class UsageError( Exception ):
-    """Catch-all error messagee"""
+    """Catch-all error message"""
+
     def __init__( self, msg ):
         self.msg = msg
         Exception.__init__(self)
@@ -102,28 +108,34 @@ def get_options():
     """Configures the options"""
 
     opt = OptionParser()
+
     opt.add_option( '-d', '--difficulty',
                     dest='difficulty',
                     default=0xFFFF,
                     type='int',
                     help='Number of iterations of hash function' )
+
     opt.add_option( '-l', '--length',
                     dest='length',
                     default=32,
                     type='int',
                     help='Password length' )
+
     opt.add_option( '-u', '--user_host', 
                     dest='user_host',
                     default=None,
                     help='username@host or other name for the password' )
+
     opt.add_option( '-a', '--alphabet',
                     dest='alphabet',
                     default='all',
                     help='Alphabet to use for password' )
+
     opt.add_option( '-m', '--memo', 
                     dest='memo',
                     default='',
                     help='Notes' )
+
     opt.add_option( '-v', '--verbose',
                     dest='verbose',
                     default=False,
@@ -136,6 +148,7 @@ def get_options():
 
 
 # If possible, output password to clipboard
+# This currently requires GTK
 try:
     import pygtk
     pygtk.require('2.0')
