@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+'''A simple secure password manager'''
+
 #
 # LICENSE:
 #  Copyright 2011, jtmaher
@@ -32,7 +34,8 @@ PASSWORD_DATABASE = os.path.expanduser( '~/.passwords' )
 
 # The alphabet used for the generated passwords
 ALPHABETS = { 
-    'all': '''ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890-=`~!@#$%^&*()_+{}|[]:;?/'"''',
+    'all': '''ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno''' + 
+    '''pqrstuvwxyz1234567890-=`~!@#$%^&*()_+{}|[]:;?/'"''',
     'nosymb': '''ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv1234567890''' }
 
 # Additional salt used for verification hashes
@@ -40,10 +43,13 @@ NUMS = 'NOTHING UP MY SLEEVES'
 
 
 class UsageError( Exception ):
+    '''Catch-all error messagee'''
     def __init__( self, msg ):
         self.msg = msg
+        Exception.__init__(self)
 
 def get_options():
+    '''Configures the options'''
     opt = OptionParser()
     opt.add_option( '-d', '--difficulty',
                     dest='difficulty',
@@ -73,48 +79,52 @@ def get_options():
                     action='store_true',
                     help='Verbose mode' )
     
-    (opts,args) = opt.parse_args()
+    (myopts, myargs) = opt.parse_args()
     opt.usage += ' [create|get|list|delete]'
-    return (opt,opts,args)
+    return (opt, myopts, myargs)
 
 # If possible, output password to clipboard
 try:
     import pygtk
     pygtk.require('2.0')
     import gtk
-    use_clipboard = True
+    USE_CLIPBOARD = True
 
 except ImportError:
-    use_clipboard = False
+    USE_CLIPBOARD = False
 
 def copy_to_clipboard( passwd ):
+    '''Write the password to the GTK clipboard'''
     clipboard = gtk.clipboard_get()
     clipboard.set_text( passwd )
     clipboard.store()
     print "Password copied to clipboard."
 
 def compute_password( passwd, n_iter ):
-    for i in range(n_iter):
-        m = hashlib.sha512()
-        m.update(passwd)
-        passwd = m.digest()
+    '''Compute the iterated sha512sum'''
+    while n_iter > 0:
+        myhash = hashlib.sha512()
+        myhash.update(passwd)
+        passwd = myhash.digest()
+        n_iter -= 1
     return passwd
 
-def alpha_encode(msg,length,alphabet):
+def alpha_encode(msg, length, alphabet):
+    '''Encode the password in the chosen alphabet'''
     try:
         chars = ALPHABETS[alphabet]
     except KeyError:
         print "Error: Unknown alphabet %s" % alphabet
         sys.exit(1)
 
-    n = 0
+    num = 0
     for i in range( len(msg) ):
-        n += ord(msg[i]) * (256**i)
+        num += ord(msg[i]) * (256**i)
     arr = []
     base = len(chars)
-    while n:
-        rem = n % base
-        n = n // base
+    while num:
+        rem = num % base
+        num = num // base
         arr.append(chars[rem])
     arr.reverse()
     return ''.join(arr[0:length])
@@ -122,28 +132,31 @@ def alpha_encode(msg,length,alphabet):
 
     
 def load_database():
+    '''Load JSON password database'''
     try:
-        f  = open( PASSWORD_DATABASE, 'r' )
-        db = json.loads( f.read() )
-        f.close()
+        myfile = open( PASSWORD_DATABASE, 'r' )
+        mydb = json.loads( myfile.read() )
+        myfile.close()
 
     except IOError:
-        db = {}
+        mydb = {}
 
-    return db
+    return mydb
 
 
-def save_database(db):
+def save_database(mydb):
+    '''Save JSON password database'''
     try:
-        f = open( PASSWORD_DATABASE, 'w' )
-        f.write( json.dumps(db, sort_keys=True, indent=2 ) )
-        f.close()
+        myfile = open( PASSWORD_DATABASE, 'w' )
+        myfile.write( json.dumps(mydb, sort_keys=True, indent=2 ) )
+        myfile.close()
     except IOError:
         print "Error: Cannot write database file: %s" % PASSWORD_DATABASE
         sys.exit(1)
 
 
-def create_pw(db,opts):
+def create_pw(mydb, opts):
+    '''Create a new password'''
     if opts.user_host == None:
         raise UsageError( 'Need a user/hostname option for password creation.')
     print "Creating password for %s (%s)..." % (opts.user_host, opts.memo)
@@ -153,7 +166,7 @@ def create_pw(db,opts):
 
     if not passwd == passwd2:
         print "Passwords do not match. Please try again."
-        sys.exit
+        sys.exit(1)
     
     print "Computing password..."
     
@@ -167,13 +180,13 @@ def create_pw(db,opts):
         passwd + NUMS, 
         opts.difficulty )
 
-    if not use_clipboard or opts.verbose:
+    if not USE_CLIPBOARD or opts.verbose:
         print alpha_encode( mypass, opts.length, opts.alphabet )
     else:
         copy_to_clipboard( 
             alpha_encode( mypass, opts.length, opts.alphabet ) )
 
-    db[opts.user_host] = { 
+    mydb[opts.user_host] = { 
         'length':     opts.length,
         'difficulty': opts.difficulty,
         'alphabet':   opts.alphabet,
@@ -182,12 +195,13 @@ def create_pw(db,opts):
     
     
     
-def get_pw(db,opts):
-    if not db.has_key( opts.user_host ):
+def get_pw( mydb, opts):
+    '''Retrieve a password from database'''
+    if not mydb.has_key( opts.user_host ):
         print "I don't have a password for %s" % opts.user_host
         sys.exit(1)
 
-    record = db[opts.user_host]
+    record = mydb[opts.user_host]
 
     passwd  = getpass.getpass( "Password: " )
     passwd += opts.user_host
@@ -203,7 +217,7 @@ def get_pw(db,opts):
 
         result = compute_password( passwd, record['difficulty'] )
     
-        if not use_clipboard or opts.verbose:
+        if not USE_CLIPBOARD or opts.verbose:
             print alpha_encode(
                 result, record['length'], record['alphabet'] )
         else:
@@ -214,18 +228,23 @@ def get_pw(db,opts):
         print "KeyError: Database entry has no key %s" % err
         sys.exit(1)
         
-def list_pw(db,opts):
-    for user_host in db:
-        record = db[user_host]
-        print '%s (%s)' % (user_host, record['memo'])
-    
+def list_pw( mydb, opts ):
+    '''List passwords in the databas'''
+    for user_host in mydb:
+        record = mydb[user_host]
+        if opts.verbose:
+            print '%s (%s)' % (user_host, record['memo'])
+        else:
+            print user_host
 
-def delete_pw(db,opts):
-    if db.has_key( opts.user_host ):
-        question = "Are you sure you want to delete %s (%s) from the database? [y/N]"
+def delete_pw( mydb, opts ):
+    '''Delete a password from the database'''
+    if mydb.has_key( opts.user_host ):
+        question = "Are you sure you want to delete %s"
+        question += " (%s) from the database? [y/N]"
         resp = raw_input( question % ( opts.user_host, opts.memo ))
         if resp == 'y':
-            del db[ opts.user_host ]
+            del mydb[ opts.user_host ]
         else:
             print "Nothing done."
             
@@ -233,10 +252,11 @@ def delete_pw(db,opts):
         print "No password for %s found in database." % opts.user_host
         sys.exit(1)
 
-if __name__ == "__main__":
-    db = load_database()        
+def main():
+    '''The main function'''
+    mydb = load_database()        
     
-    (parser,opts,args) = get_options()
+    (parser, opts, args) = get_options()
     
     actions = { 'create': create_pw,
                 'get':    get_pw,
@@ -248,11 +268,10 @@ if __name__ == "__main__":
             raise UsageError( "Need an action: create, get, list or delete.")
         else:
             action = args[0]
-
-            actions[action](db,opts)
+            actions[action](mydb, opts)
             
-    except UsageError as u:
-        print u.msg
+    except UsageError as uerr:
+        print uerr.msg
         parser.print_help()
         sys.exit(1)
         
@@ -260,5 +279,7 @@ if __name__ == "__main__":
         print
         sys.exit(1)
         
-    save_database( db )
-        
+    save_database( mydb )
+
+if __name__ == "__main__":
+    main()
