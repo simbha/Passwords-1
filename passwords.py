@@ -1,24 +1,24 @@
 #!/usr/bin/python
 
-'''A simple secure password manager'''
+"""
+A simple secure password manager
 
-#
-# LICENSE:
-#  Copyright 2011, jtmaher
-#
-#  This program is free software: you can redistribute it and/or modify	
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+LICENSE:
+Copyright 2011, jtmaher
+
+This program is free software: you can redistribute it and/or modify	
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
 import hashlib
 import os
@@ -34,22 +34,22 @@ PASSWORD_DATABASE = os.path.expanduser( '~/.passwords' )
 
 # The alphabet used for the generated passwords
 ALPHABETS = { 
-    'all': '''ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno''' + 
-    '''pqrstuvwxyz1234567890-=`~!@#$%^&*()_+{}|[]:;?/'"''',
-    'nosymb': '''ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv1234567890''' }
+    'all': """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno""" + 
+    """pqrstuvwxyz1234567890-=`~!@#$%^&*()_+{}|[]:;?/'"""",
+    'nosymb': """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv1234567890""" }
 
 # Additional salt used for verification hashes
 NUMS = 'NOTHING UP MY SLEEVES'
 
 
 class UsageError( Exception ):
-    '''Catch-all error messagee'''
+    """Catch-all error messagee"""
     def __init__( self, msg ):
         self.msg = msg
         Exception.__init__(self)
 
 def get_options():
-    '''Configures the options'''
+    """Configures the options"""
     opt = OptionParser()
     opt.add_option( '-d', '--difficulty',
                     dest='difficulty',
@@ -94,14 +94,14 @@ except ImportError:
     USE_CLIPBOARD = False
 
 def copy_to_clipboard( passwd ):
-    '''Write the password to the GTK clipboard'''
+    """Write the password to the GTK clipboard"""
     clipboard = gtk.clipboard_get()
     clipboard.set_text( passwd )
     clipboard.store()
     print "Password copied to clipboard."
 
 def compute_password( passwd, n_iter ):
-    '''Compute the iterated sha512sum'''
+    """Compute the iterated sha512sum"""
     while n_iter > 0:
         myhash = hashlib.sha512()
         myhash.update(passwd)
@@ -110,7 +110,7 @@ def compute_password( passwd, n_iter ):
     return passwd
 
 def alpha_encode(msg, length, alphabet):
-    '''Encode the password in the chosen alphabet'''
+    """Encode the password in the chosen alphabet"""
     try:
         chars = ALPHABETS[alphabet]
     except KeyError:
@@ -132,7 +132,7 @@ def alpha_encode(msg, length, alphabet):
 
     
 def load_database():
-    '''Load JSON password database'''
+    """Load JSON password database"""
     try:
         myfile = open( PASSWORD_DATABASE, 'r' )
         mydb = json.loads( myfile.read() )
@@ -145,7 +145,7 @@ def load_database():
 
 
 def save_database(mydb):
-    '''Save JSON password database'''
+    """Save JSON password database"""
     try:
         myfile = open( PASSWORD_DATABASE, 'w' )
         myfile.write( json.dumps(mydb, sort_keys=True, indent=2 ) )
@@ -156,7 +156,7 @@ def save_database(mydb):
 
 
 def create_pw(mydb, opts):
-    '''Create a new password'''
+    """Create a new password"""
     if opts.user_host == None:
         raise UsageError( 'Need a user/hostname option for password creation.')
     print "Creating password for %s (%s)..." % (opts.user_host, opts.memo)
@@ -196,7 +196,7 @@ def create_pw(mydb, opts):
     
     
 def get_pw( mydb, opts):
-    '''Retrieve a password from database'''
+    """Retrieve a password from database"""
     if not mydb.has_key( opts.user_host ):
         print "I don't have a password for %s" % opts.user_host
         sys.exit(1)
@@ -229,7 +229,7 @@ def get_pw( mydb, opts):
         sys.exit(1)
         
 def list_pw( mydb, opts ):
-    '''List passwords in the databas'''
+    """List passwords in the databas"""
     for user_host in mydb:
         record = mydb[user_host]
         if opts.verbose:
@@ -238,7 +238,7 @@ def list_pw( mydb, opts ):
             print user_host
 
 def delete_pw( mydb, opts ):
-    '''Delete a password from the database'''
+    """Delete a password from the database"""
     if mydb.has_key( opts.user_host ):
         question = "Are you sure you want to delete %s"
         question += " (%s) from the database? [y/N]"
@@ -253,7 +253,7 @@ def delete_pw( mydb, opts ):
         sys.exit(1)
 
 def main():
-    '''The main function'''
+    """The main function"""
     mydb = load_database()        
     
     (parser, opts, args) = get_options()
