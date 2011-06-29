@@ -43,6 +43,9 @@ EXAMPLES:
 - Create a strong password
   ./passwords.py create -u user@host
 
+- Create a strong password with a memo
+  ./passwords.py create -u user@host -m 'Important account!'
+
 - Create a password of length 8 using only alphanumeric chars
   ./passwords.py create -u user@stupidhost -l 8 -a nosymb
 
@@ -382,7 +385,8 @@ def main():
             
     except UsageError as uerr:
         print uerr.msg
-        # parser.print_help()
+        if opts.verbose:
+            parser.print_help()
         sys.exit(1)
         
     except KeyboardInterrupt:
