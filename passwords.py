@@ -214,7 +214,10 @@ def alpha_encode(msg, length, alphabet):
     return ''.join(arr[0:length])
 
 def output_password( passwd, opts ):
-    """Display password to the user"""
+    """
+    Display password to the user or copy to 
+    clipboard if possible.
+    """
 
     result = alpha_encode( passwd, opts.length, opts.alphabet )
 
