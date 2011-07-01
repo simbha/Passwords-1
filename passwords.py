@@ -14,6 +14,7 @@ The method is to create an iterated sha512 hash of the
 This hash is then encoded in a selectable alphabet and 
 truncated to any desired length.  These features should
 allow passwords to be created to match even the most 
+restrictive policies.
 
 The password will be copied to the GTK clipboard if 
 available, or else printed to stdout.  Note: You have to 
@@ -212,7 +213,17 @@ def alpha_encode(msg, length, alphabet):
     arr.reverse()
     return ''.join(arr[0:length])
 
-    
+def output_password( passwd, opts ):
+    """Display password to the user"""
+
+    result = alpha_encode( passwd, opts.length, opts.alphabet )
+
+    if not USE_CLIPBOARD or opts.verbose:
+        print result
+    else:
+        copy_to_clipboard( result )
+
+
 def load_database():
     """Load JSON password database"""
 
@@ -264,7 +275,7 @@ def create_pw(mydb, opts):
         raise UsageError( 'Need a user/hostname option for password creation.')
 
     if mydb.has_key(opts.user_host):
-        msg  = 'I already have a password for %s.\n' % opts.user_host
+        msg  = 'Error: I already have a password for %s.\n' % opts.user_host
         msg += 'Please delete it from the database if you want to replace it:\n'
         msg += '  ./passwords.py delete -u %s' % opts.user_host
         raise UsageError( msg )
@@ -291,11 +302,7 @@ def create_pw(mydb, opts):
         passwd + NUMS, 
         opts.difficulty )
 
-    if not USE_CLIPBOARD or opts.verbose:
-        print alpha_encode( mypass, opts.length, opts.alphabet )
-    else:
-        copy_to_clipboard( 
-            alpha_encode( mypass, opts.length, opts.alphabet ) )
+    output_password( mypass, opts )
     
     mydb[opts.user_host] = { 
         'length':     opts.length,
@@ -328,12 +335,10 @@ def get_pw( mydb, opts):
 
         result = compute_password( passwd, record['difficulty'] )
     
-        if not USE_CLIPBOARD or opts.verbose:
-            print alpha_encode(
-                result, record['length'], record['alphabet'] )
-        else:
-            copy_to_clipboard(
-                alpha_encode(result, record['length'], record['alphabet']) )
+        opts.length = record['length']
+        opts.alphabet = record['alphabet']
+
+        output_password( result, opts )
 
     except KeyError as err:
         print "KeyError: Database entry has no key %s" % err
