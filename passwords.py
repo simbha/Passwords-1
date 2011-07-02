@@ -162,14 +162,16 @@ def get_options():
 
 # If possible, output password to clipboard
 # This currently requires GTK
-try:
-    import pygtk
-    pygtk.require('2.0')
-    import gtk
-    USE_CLIPBOARD = True
-
-except (ImportError, GtkWarning):
-    USE_CLIPBOARD = False
+USE_CLIPBOARD = False
+if os.environ.has_key( 'DISPLAY' ):
+    try:
+        import pygtk
+        pygtk.require('2.0')
+        import gtk
+        USE_CLIPBOARD = True
+        
+    except ImportError:
+        pass
 
 
 def copy_to_clipboard( passwd ):
@@ -180,7 +182,7 @@ def copy_to_clipboard( passwd ):
         clipboard.set_text( passwd )
         clipboard.store()
         print "Password copied to clipboard."
-    except GtkWarning:
+    except:
         print "Cannot access GTK clipboard. Use -v to force output to console."
         sys.exit(1)
 
