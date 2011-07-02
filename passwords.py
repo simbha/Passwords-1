@@ -168,7 +168,7 @@ try:
     import gtk
     USE_CLIPBOARD = True
 
-except ImportError:
+except (ImportError, GtkWarning):
     USE_CLIPBOARD = False
 
 
@@ -180,7 +180,7 @@ def copy_to_clipboard( passwd ):
         clipboard.set_text( passwd )
         clipboard.store()
         print "Password copied to clipboard."
-    except:
+    except GtkWarning:
         print "Cannot access GTK clipboard. Use -v to force output to console."
         sys.exit(1)
 
