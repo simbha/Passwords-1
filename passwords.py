@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 """
 A simple secure password manager
 
@@ -177,14 +176,10 @@ if os.environ.has_key( 'DISPLAY' ):
 def copy_to_clipboard( passwd ):
     """Write the password to the GTK clipboard"""
 
-    try:
-        clipboard = gtk.clipboard_get()
-        clipboard.set_text( passwd )
-        clipboard.store()
-        print "Password copied to clipboard."
-    except:
-        print "Cannot access GTK clipboard. Use -v to force output to console."
-        sys.exit(1)
+    clipboard = gtk.clipboard_get()
+    clipboard.set_text( passwd )
+    clipboard.store()
+    print "Password copied to clipboard."
 
 def compute_password( passwd, n_iter ):
     """Compute the iterated sha512sum"""
