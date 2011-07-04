@@ -1,0 +1,77 @@
+A simple secure password manager
+
+DESCRIPTION:
+
+This program maintains a secure database of passwords to
+a collection of sites.  The intended (but not required)
+usage is to generate secure passwords from one "master password".
+
+The method is to create an iterated sha512 hash of the 
+"master password", salted with the user@hostname string.  
+This hash is then encoded in a selectable alphabet and 
+truncated to any desired length.  These features should
+allow passwords to be created to match even the most 
+restrictive policies.
+
+The password will be copied to the GTK clipboard if 
+available, or else printed to stdout.  Note: You have to 
+right-click "paste" -- middle mouse button does not work
+with this.
+
+The database itself stores only the user@hostname, the number
+of iterations used in hashing, the alphabet, the length of 
+the password, and a "verification" hash (using an alternate salt).
+The verification hash is used to ensure that the correct 
+master password has been provided for retrieval requests.
+
+Note: There is no need to use the same master password for all
+sites, although allowing this is a design goal of this project.
+
+The master and generated passwords are not stored anywhere,
+and should be secure in the event that a single generated 
+password or the password database is compromised.  This is,
+of course, contingent upon a reasonably strong choice of
+master password.
+
+The generated passwords are a deterministic function of the 
+master password, the number of iterations ("difficulty"), the
+alphabet, password length, and the user/host name.  Thus,
+if default parameters are used, the database is not strictly
+necessary.
+
+EXAMPLES:
+
+- Create a strong password
+  ./passwords.py create -u user@host
+
+- Create a strong password with a memo
+  ./passwords.py create -u user@host -m 'Important account!'
+
+- Create a password of length 8 using only alphanumeric chars
+  ./passwords.py create -u user@stupidhost -l 8 -a nosymb
+
+- Retrieve a password
+  ./passwords.py get -u user@host
+
+- List passwords in database
+  ./passwords.py list
+
+- Delete password from database
+  ./passwords.py delete -u user@host 
+
+LICENSE:
+
+Copyright 2011, jtmaher
+
+This program is free software: you can redistribute it and/or modify	
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
