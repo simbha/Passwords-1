@@ -1,7 +1,9 @@
-/usr/bin/passwords: passwords.py
-	cp passwords.py /usr/bin/passwords
+INSTALL_TARGET = /usr/bin/passwords
 
-install: /usr/bin/passwords
+$(INSTALL_TARGET): passwords.py
+	cp passwords.py $(INSTALL_TARGET)
+
+install: $(INSTALL_TARGET)
 
 uninstall:
-	rm /usr/bin/passwords
+	test -e $(INSTALL_TARGET) && rm $(INSTALL_TARGET)
